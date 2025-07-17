@@ -842,57 +842,56 @@ def teacher_dashboard():
             selected_student = st.selectbox("Select Student", teacher_students, 
                                           format_func=lambda x: f"{get_student_info(x)[0]} ({x})")
             
-            # Replace this in both teacher_dashboard() tab2 and tab3
             if selected_student:
                 student_info = get_student_info(selected_student)
                 student_grade = student_info[1]  # Get the grade
     
-            # Define grade-specific competencies
-            if student_grade == "1":
-                competency_areas = [
-                # English
-                "English - Listening & Auditory - Sound discrimination",
-                "English - Speaking & Oral - Clear articulation", 
-                "English - Visual Literacy - Letter recognition (a-z, A-Z)",
-                "English - Pre-Reading/Reading - Phonemic blending",
-                "English - Pre-Writing - Pencil grip/control",
-                "English - Pre-Writing - Letter formation",
-                # Math
-                "Math - Numeracy Readiness - Number recognition (1-20)",
-                "Math - Numeracy Readiness - Counting objects accurately",
-                "Math - Spatial/Shape Awareness - Shape recognition", 
-                "Math - Measurement Concepts - Size & quantity comparison",
-                # Hindi
-                "Hindi - Listening - Recognize Hindi sounds (स्वर, व्यंजन)",
-                "Hindi - Speaking - Clear pronunciation",
-                "Hindi - Speaking - Simple sentence formation",
-                "Hindi - Speaking - Poem recitation",
-                "Hindi - Reading - Letter/matra recognition",
-                "Hindi - Reading - Reading small words",
-                "Hindi - Writing - Letter formation",
-                "Hindi - Writing - Copy simple words"
-            ]
-            else:
-            # Keep existing competencies for other grades
-                competency_areas = [
-                "Reading Comprehension", "Mathematical Problem Solving", "Scientific Inquiry",
-                "Writing Skills", "Critical Thinking", "Communication", "Creativity",
-                "Time Management", "Research Skills", "Digital Literacy"
-            ]
-            
-            st.subheader("Competency Assessment")
-            competency_scores = {}
-            
-            for area in competency_areas:
-                score = st.slider(f"{area}", 0, 100, 50, key=f"comp_{area}")
-                competency_scores[area] = score
-            
-            notes = st.text_area("Additional Notes")
-            
-            if st.button("Save Assessment"):
-                assessment_id = f"{selected_student}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                save_assessment(assessment_id, selected_student, st.session_state.current_user, competency_scores, notes)
-                st.success("Assessment saved successfully!")
+                # Define grade-specific competencies
+                if student_grade == "1":
+                    competency_areas = [
+                        # English
+                        "English - Listening & Auditory - Sound discrimination",
+                        "English - Speaking & Oral - Clear articulation", 
+                        "English - Visual Literacy - Letter recognition (a-z, A-Z)",
+                        "English - Pre-Reading/Reading - Phonemic blending",
+                        "English - Pre-Writing - Pencil grip/control",
+                        "English - Pre-Writing - Letter formation",
+                        # Math
+                        "Math - Numeracy Readiness - Number recognition (1-20)",
+                        "Math - Numeracy Readiness - Counting objects accurately",
+                        "Math - Spatial/Shape Awareness - Shape recognition", 
+                        "Math - Measurement Concepts - Size & quantity comparison",
+                        # Hindi
+                        "Hindi - Listening - Recognize Hindi sounds (स्वर, व्यंजन)",
+                        "Hindi - Speaking - Clear pronunciation",
+                        "Hindi - Speaking - Simple sentence formation",
+                        "Hindi - Speaking - Poem recitation",
+                        "Hindi - Reading - Letter/matra recognition",
+                        "Hindi - Reading - Reading small words",
+                        "Hindi - Writing - Letter formation",
+                        "Hindi - Writing - Copy simple words"
+                    ]
+                else:
+                    # Keep existing competencies for other grades
+                    competency_areas = [
+                        "Reading Comprehension", "Mathematical Problem Solving", "Scientific Inquiry",
+                        "Writing Skills", "Critical Thinking", "Communication", "Creativity",
+                        "Time Management", "Research Skills", "Digital Literacy"
+                    ]
+                
+                st.subheader("Competency Assessment")
+                competency_scores = {}
+                
+                for area in competency_areas:
+                    score = st.slider(f"{area}", 0, 100, 50, key=f"comp_{area}")
+                    competency_scores[area] = score
+                
+                notes = st.text_area("Additional Notes")
+                
+                if st.button("Save Assessment"):
+                    assessment_id = f"{selected_student}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                    save_assessment(assessment_id, selected_student, st.session_state.current_user, competency_scores, notes)
+                    st.success("Assessment saved successfully!")
         else:
             st.info("No students to assess. Please add students first.")
     
@@ -901,6 +900,19 @@ def teacher_dashboard():
         teacher_students = get_user_students(st.session_state.current_user, 'teacher')
         
         if teacher_students:
+            # Initialize session state for upload status
+            if 'upload_success' not in st.session_state:
+                st.session_state.upload_success = False
+            if 'upload_message' not in st.session_state:
+                st.session_state.upload_message = ""
+            
+            # Display upload status messages at the top
+            if st.session_state.upload_success:
+                st.success(st.session_state.upload_message)
+                # Clear the message after displaying
+                st.session_state.upload_success = False
+                st.session_state.upload_message = ""
+            
             selected_student = st.selectbox("Select Student", teacher_students, 
                                           format_func=lambda x: f"{get_student_info(x)[0]} ({x})",
                                           key="upload_student")
@@ -908,71 +920,126 @@ def teacher_dashboard():
             if selected_student:
                 student_info = get_student_info(selected_student)
                 student_grade = student_info[1]  # Get the grade
-    
-            # Define grade-specific competencies
-            if student_grade == "1":
-                competency_areas = [
-                # English
-                "English - Listening & Auditory - Sound discrimination",
-                "English - Speaking & Oral - Clear articulation", 
-                "English - Visual Literacy - Letter recognition (a-z, A-Z)",
-                "English - Pre-Reading/Reading - Phonemic blending",
-                "English - Pre-Writing - Pencil grip/control",
-                "English - Pre-Writing - Letter formation",
-                # Math
-                "Math - Numeracy Readiness - Number recognition (1-20)",
-                "Math - Numeracy Readiness - Counting objects accurately",
-                "Math - Spatial/Shape Awareness - Shape recognition", 
-                "Math - Measurement Concepts - Size & quantity comparison",
-                # Hindi
-                "Hindi - Listening - Recognize Hindi sounds (स्वर, व्यंजन)",
-                "Hindi - Speaking - Clear pronunciation",
-                "Hindi - Speaking - Simple sentence formation",
-                "Hindi - Speaking - Poem recitation",
-                "Hindi - Reading - Letter/matra recognition",
-                "Hindi - Reading - Reading small words",
-                "Hindi - Writing - Letter formation",
-                "Hindi - Writing - Copy simple words"
-            ]
-            else:
-            # Keep existing competencies for other grades
-                competency_areas = [
-                "Reading Comprehension", "Mathematical Problem Solving", "Scientific Inquiry",
-                "Writing Skills", "Critical Thinking", "Communication", "Creativity",
-                "Time Management", "Research Skills", "Digital Literacy"
-            ]
-            
-            target_competency = st.selectbox("Target Competency", competency_areas)
-            material_title = st.text_input("Material Title")
-            material_description = st.text_area("Description")
-            duration_days = st.number_input("Duration (Number of Days)", min_value=1, max_value=30, value=5)
-
-            if selected_student:
-                st.write(f"Uploading material for: {get_student_info(selected_student)[0]}")
-
-            uploaded_file = st.file_uploader("Upload PDF", type=['pdf'], key=f"material_upload_{selected_student}_{datetime.now().strftime('%Y%m%d')}")
-
-            if uploaded_file is not None:
-                if validate_file_type(uploaded_file):
-                    st.success(f"File '{uploaded_file.name}' selected successfully!")
-                    st.write(f"File size: {len(uploaded_file.getvalue())} bytes")
-    
-                if st.button("Upload Material"):
-                    if material_title and target_competency:
-                        try:
-                            material_id = f"{selected_student}_{target_competency}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                            file_data = uploaded_file.getvalue()  # Use getvalue() instead of read()
-                            save_material(material_id, selected_student, st.session_state.current_user, 
-                                        target_competency, material_title, material_description, 
-                                        file_data, uploaded_file.name, duration_days)
-                            st.success(f"Material '{material_title}' uploaded successfully for {duration_days} days!")
-                            st.rerun()  # Refresh the page after upload
-                        except Exception as e:
-                            st.error(f"Error uploading file: {str(e)}")
-                    else:
-                        st.error("Please fill all required fields!")
-            else:
-                st.info("Please select a PDF file to upload.")
+                
+                # Define grade-specific competencies
+                if student_grade == "1":
+                    competency_areas = [
+                        # English
+                        "English - Listening & Auditory - Sound discrimination",
+                        "English - Speaking & Oral - Clear articulation", 
+                        "English - Visual Literacy - Letter recognition (a-z, A-Z)",
+                        "English - Pre-Reading/Reading - Phonemic blending",
+                        "English - Pre-Writing - Pencil grip/control",
+                        "English - Pre-Writing - Letter formation",
+                        # Math
+                        "Math - Numeracy Readiness - Number recognition (1-20)",
+                        "Math - Numeracy Readiness - Counting objects accurately",
+                        "Math - Spatial/Shape Awareness - Shape recognition", 
+                        "Math - Measurement Concepts - Size & quantity comparison",
+                        # Hindi
+                        "Hindi - Listening - Recognize Hindi sounds (स्वर, व्यंजन)",
+                        "Hindi - Speaking - Clear pronunciation",
+                        "Hindi - Speaking - Simple sentence formation",
+                        "Hindi - Speaking - Poem recitation",
+                        "Hindi - Reading - Letter/matra recognition",
+                        "Hindi - Reading - Reading small words",
+                        "Hindi - Writing - Letter formation",
+                        "Hindi - Writing - Copy simple words"
+                    ]
+                else:
+                    # Keep existing competencies for other grades
+                    competency_areas = [
+                        "Reading Comprehension", "Mathematical Problem Solving", "Scientific Inquiry",
+                        "Writing Skills", "Critical Thinking", "Communication", "Creativity",
+                        "Time Management", "Research Skills", "Digital Literacy"
+                    ]
+                
+                st.info(f"📚 Uploading material for: **{get_student_info(selected_student)[0]}** (Grade {student_grade})")
+                
+                # Form for upload
+                with st.form("upload_form", clear_on_submit=True):
+                    target_competency = st.selectbox("Target Competency", competency_areas)
+                    material_title = st.text_input("Material Title")
+                    material_description = st.text_area("Description")
+                    duration_days = st.number_input("Duration (Number of Days)", min_value=1, max_value=30, value=5)
+                    
+                    uploaded_file = st.file_uploader("Upload PDF", type=['pdf'])
+                    
+                    # Submit button
+                    submit_button = st.form_submit_button("🚀 Upload Material")
+                    
+                    if submit_button:
+                        # Validate inputs
+                        if not material_title:
+                            st.error("❌ Please enter a material title!")
+                        elif not target_competency:
+                            st.error("❌ Please select a target competency!")
+                        elif uploaded_file is None:
+                            st.error("❌ Please select a PDF file to upload!")
+                        elif not validate_file_type(uploaded_file):
+                            st.error("❌ Please upload only PDF files!")
+                        else:
+                            # Show upload progress
+                            progress_bar = st.progress(0)
+                            status_text = st.empty()
+                            
+                            try:
+                                # Update progress
+                                progress_bar.progress(25)
+                                status_text.text("📁 Processing file...")
+                                
+                                # Generate unique material ID
+                                material_id = f"{selected_student}_{target_competency.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                                
+                                progress_bar.progress(50)
+                                status_text.text("💾 Saving to database...")
+                                
+                                # Save to database
+                                file_data = uploaded_file.getvalue()
+                                save_material(material_id, selected_student, st.session_state.current_user, 
+                                            target_competency, material_title, material_description, 
+                                            file_data, uploaded_file.name, duration_days)
+                                
+                                progress_bar.progress(100)
+                                status_text.text("✅ Upload completed successfully!")
+                                
+                                # Set success message for next render
+                                st.session_state.upload_success = True
+                                st.session_state.upload_message = f"🎉 Material '{material_title}' uploaded successfully for {get_student_info(selected_student)[0]} ({duration_days} days)!"
+                                
+                                # Clear progress indicators
+                                progress_bar.empty()
+                                status_text.empty()
+                                
+                                # Rerun to show success message
+                                st.rerun()
+                                
+                            except Exception as e:
+                                progress_bar.empty()
+                                status_text.empty()
+                                st.error(f"❌ Error uploading file: {str(e)}")
+                
+                # Show existing materials for this student
+                st.subheader("📋 Existing Materials")
+                existing_materials = get_student_materials(selected_student)
+                
+                if existing_materials:
+                    for idx, material in enumerate(existing_materials, 1):
+                        with st.expander(f"📄 {idx}. {material['title']} - {material['competency']}"):
+                            st.write(f"**Description:** {material['description']}")
+                            st.write(f"**Duration:** {material['duration_days']} days")
+                            st.write(f"**File:** {material['filename']}")
+                            st.write(f"**Uploaded:** {material['uploaded_at']}")
+                            
+                            # Download button for existing materials
+                            st.download_button(
+                                label=f"📥 Download {material['filename']}",
+                                data=material['file_data'],
+                                file_name=material['filename'],
+                                mime='application/pdf'
+                            )
+                else:
+                    st.info("No materials uploaded yet for this student.")
         else:
             st.info("No students available. Please add students first.")
     
@@ -1058,7 +1125,6 @@ def teacher_dashboard():
                 st.info("No daily progress data available.")
         else:
             st.info("No students available.")
-
 
 # Replace the parent_dashboard function with this fixed version:
 
