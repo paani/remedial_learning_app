@@ -576,7 +576,7 @@ init_database()
 
 # Main application
 def main():
-    st.title("📚 Parent-Teacher Collaborative Remedial Sessions Platform")
+    st.title("📚 D. P. Public School's Parent-Teacher Collaborative Remedial Sessions Platform")
     
     # Sidebar for navigation
     with st.sidebar:
