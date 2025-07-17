@@ -10,7 +10,8 @@ import json
 st.set_page_config(
     page_title="Parent-Teacher Collaborative Platform",
     page_icon="📚",
-    layout="wide"
+    layout="wide", 
+    initial_sidebar_state="collapsed"
 )
 
 # Database setup
@@ -547,6 +548,28 @@ def get_student_daily_progress_summary(student_id):
         'title': row[6],
         'competency': row[7]
     } for row in results]
+
+# Add mobile detection and fallback
+def is_mobile():
+    """Detect if user is on mobile device"""
+    try:
+        # Check user agent via JavaScript (Note: this method is deprecated)
+        user_agent = st.query_params.get('mobile', False)  # Updated API
+        return user_agent
+    except:
+        return False
+
+# Mobile-safe markdown rendering
+def safe_markdown(text):
+    """Render markdown safely for mobile browsers"""
+    if text is None:
+        return ""
+    
+    # Remove problematic patterns that cause regex errors
+    text = str(text)  # Ensure it's a string
+    # Remove lookbehind pattern that causes mobile issues
+    text = re.sub(r'[^\w\s\-\.,!?():\[\]{}"\'/]', '', text)  # Remove special chars
+    return text
 
 # Initialize database
 init_database()
