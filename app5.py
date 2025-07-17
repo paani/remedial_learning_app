@@ -671,6 +671,13 @@ def logout_user():
     # Clear URL parameters
     st.query_params.clear()
 
+def backup_database():
+    """Create database backup"""
+    if os.path.exists(DB_NAME):
+        backup_name = f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
+        import shutil
+        shutil.copy2(DB_NAME, backup_name)
+
 # Initialize database
 init_database()
 
