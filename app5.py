@@ -2,9 +2,10 @@ import streamlit as st
 import sqlite3
 import hashlib
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import base64
 import json
+import uuid
 
 # Configure page
 st.set_page_config(
@@ -139,16 +140,21 @@ def init_database():
             FOREIGN KEY (teacher) REFERENCES users(username)
         )
     ''')
+
+    # Add sessions table for persistent login
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS sessions (
+            session_id TEXT PRIMARY KEY,
+            username TEXT NOT NULL,
+            user_type TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            expires_at TIMESTAMP NOT NULL,
+            FOREIGN KEY (username) REFERENCES users(username)
+        )
+    ''')
+    
     conn.commit()
     conn.close()
-
-# Initialize session state
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-if 'user_type' not in st.session_state:
-    st.session_state.user_type = None
-if 'current_user' not in st.session_state:
-    st.session_state.current_user = None
 
 # Helper functions
 def hash_password(password):
@@ -171,19 +177,20 @@ def create_user(username, password, user_type, full_name):
         conn.close()
         return False
 
-def authenticate_user(username, password):
-    """Authenticate user credentials"""
-    conn = sqlite3.connect(DB_NAME)
-    cursor = conn.cursor()
+# Modified authentication function
+def authenticate_user_with_session(username, password):
+    """Authenticate user and create session"""
+    is_authenticated, user_type = authenticate_user(username, password)
     
-    cursor.execute('''
-        SELECT password, user_type FROM users WHERE username = ?
-    ''', (username,))
-    result = cursor.fetchone()
-    conn.close()
+    if is_authenticated:
+        session_id = create_session(username, user_type)
+        st.session_state.session_id = session_id
+        
+        # Update URL to include session (optional)
+        st.query_params['session_id'] = session_id
+        
+        return True, user_type
     
-    if result and result[0] == hash_password(password):
-        return True, result[1]
     return False, None
 
 def get_user_info(username):
@@ -571,12 +578,108 @@ def safe_markdown(text):
     text = re.sub(r'[^\w\s\-\.,!?():\[\]{}"\'/]', '', text)  # Remove special chars
     return text
 
+# Add these new functions for session management
+def create_session(username, user_type, days=7):
+    """Create a persistent session"""
+    session_id = str(uuid.uuid4())
+    expires_at = datetime.now() + timedelta(days=days)
+    
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    
+    # Clean up old sessions first
+    cursor.execute('DELETE FROM sessions WHERE expires_at < ?', (datetime.now(),))
+    
+    # Create new session
+    cursor.execute('''
+        INSERT INTO sessions (session_id, username, user_type, expires_at)
+        VALUES (?, ?, ?, ?)
+    ''', (session_id, username, user_type, expires_at))
+    
+    conn.commit()
+    conn.close()
+    
+    return session_id
+
+def validate_session(session_id):
+    """Validate and return session info"""
+    if not session_id:
+        return None
+    
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT username, user_type FROM sessions 
+        WHERE session_id = ? AND expires_at > ?
+    ''', (session_id, datetime.now()))
+    
+    result = cursor.fetchone()
+    conn.close()
+    
+    if result:
+        return {'username': result[0], 'user_type': result[1]}
+    return None
+
+def delete_session(session_id):
+    """Delete a session (logout)"""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    
+    cursor.execute('DELETE FROM sessions WHERE session_id = ?', (session_id,))
+    
+    conn.commit()
+    conn.close()
+
+# Modified session initialization
+def init_session():
+    """Initialize session with persistence"""
+    # Check URL parameters for session ID
+    query_params = st.query_params
+    session_id = query_params.get('session_id')
+    
+    if not session_id:
+        # Check if stored in session state
+        session_id = st.session_state.get('session_id')
+    
+    if session_id:
+        session_info = validate_session(session_id)
+        if session_info:
+            st.session_state.logged_in = True
+            st.session_state.user_type = session_info['user_type']
+            st.session_state.current_user = session_info['username']
+            st.session_state.session_id = session_id
+            return True
+    
+    # Initialize as logged out
+    st.session_state.logged_in = False
+    st.session_state.user_type = None
+    st.session_state.current_user = None
+    st.session_state.session_id = None
+    return False
+# Modified logout function
+def logout_user():
+    """Logout user and clean up session"""
+    if st.session_state.get('session_id'):
+        delete_session(st.session_state.session_id)
+    
+    st.session_state.logged_in = False
+    st.session_state.user_type = None
+    st.session_state.current_user = None
+    st.session_state.session_id = None
+    
+    # Clear URL parameters
+    st.query_params.clear()
+
 # Initialize database
 init_database()
 
 # Main application
 def main():
     st.title("📚 D. P. Public School's Remedial Sessions Platform")
+    
+    # Initialize persistent session
+    init_session()
     
     # Sidebar for navigation
     with st.sidebar:
@@ -587,9 +690,7 @@ def main():
                 st.write(f"Role: {user_info[1].title()}")
             
             if st.button("Logout"):
-                st.session_state.logged_in = False
-                st.session_state.user_type = None
-                st.session_state.current_user = None
+                logout_user()
                 st.rerun()
         else:
             st.write("Please login to continue")
@@ -605,7 +706,7 @@ def main():
             password = st.text_input("Password", type="password")
             
             if st.button("Login"):
-                is_authenticated, db_user_type = authenticate_user(username, password)
+                is_authenticated, db_user_type = authenticate_user_with_session(username, password)
                 if is_authenticated:
                     if db_user_type == user_type:
                         st.session_state.logged_in = True
