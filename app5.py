@@ -916,7 +916,7 @@ def teacher_dashboard():
             
             selected_student = st.selectbox("Select Student", teacher_students, 
                           format_func=lambda x: f"{get_student_info(x)[0]} ({x})",
-                          key="daily_review_student")
+                          key="upload_materials_student")
             
             if selected_student:
                 student_info = get_student_info(selected_student)
@@ -1077,7 +1077,7 @@ def teacher_dashboard():
         if teacher_students:
             selected_student = st.selectbox("Select Student", teacher_students, 
                                       format_func=lambda x: f"{get_student_info(x)[0]} ({x})",
-                                      key="daily_review_student")
+                                      key="daily_feedback_student")
     
             daily_progress_data = get_student_daily_progress_summary(selected_student)
     
@@ -1254,21 +1254,21 @@ def parent_dashboard():
                             
                                 with col3:
                                     if not existing_progress or not existing_progress['completed']:
-                                        if st.button(f"Save Comment", key=f"save_comment_{sid}_{material['material_id']}_day_{day}"):
+                                        if st.button(f"Mark Complete", key=f"mark_complete_{sid}_{material['material_id']}_day_{day}"):
                                             daily_progress_id = f"{material['material_id']}_day_{day}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                                             save_daily_progress(daily_progress_id, material['material_id'], sid, 
-                                                          st.session_state.current_user, day, 
-                                                          completed=True, parent_comments=parent_comment)
+                                                  st.session_state.current_user, day, 
+                                                  completed=True, parent_comments=parent_comment)
                                             st.success(f"Day {day} marked as completed!")
                                             st.rerun()
-                                
+
                                     # Save comment button (for when not marking as complete)
-                                    if st.button(f"Save Comment", key=f"save_comment_{sid}_{material['material_id']}_day_{day}"):
+                                    if st.button(f"Save Comment", key=f"save_comment_only_{sid}_{material['material_id']}_day_{day}"):
                                         if parent_comment:
                                             daily_progress_id = f"{material['material_id']}_day_{day}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                                             save_daily_progress(daily_progress_id, material['material_id'], sid, 
-                                                          st.session_state.current_user, day, 
-                                                          completed=False, parent_comments=parent_comment)
+                                                  st.session_state.current_user, day, 
+                                                  completed=False, parent_comments=parent_comment)
                                             st.success("Comment saved!")
                                             st.rerun()
                         
