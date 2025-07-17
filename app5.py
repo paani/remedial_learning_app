@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import base64
 import json
 import uuid
+import re
 
 # Add at the top
 IS_DEPLOYED = os.getenv('STREAMLIT_RUNTIME_ENV') == 'cloud'
@@ -883,7 +884,7 @@ def teacher_dashboard():
                 competency_scores = {}
                 
                 for area in competency_areas:
-                    score = st.slider(f"{area}", 0, 100, 50, key=f"comp_{area}")
+                    score = st.slider(f"{area}", 0, 100, 50, key=f"comp_{selected_student}_{area}")
                     competency_scores[area] = score
                 
                 notes = st.text_area("Additional Notes")
@@ -914,8 +915,8 @@ def teacher_dashboard():
                 st.session_state.upload_message = ""
             
             selected_student = st.selectbox("Select Student", teacher_students, 
-                                          format_func=lambda x: f"{get_student_info(x)[0]} ({x})",
-                                          key="upload_student")
+                          format_func=lambda x: f"{get_student_info(x)[0]} ({x})",
+                          key="daily_review_student")
             
             if selected_student:
                 student_info = get_student_info(selected_student)
@@ -958,14 +959,13 @@ def teacher_dashboard():
                 
                 # Form for upload
                 with st.form("upload_form", clear_on_submit=True):
-                    target_competency = st.selectbox("Target Competency", competency_areas)
-                    material_title = st.text_input("Material Title")
-                    material_description = st.text_area("Description")
-                    duration_days = st.number_input("Duration (Number of Days)", min_value=1, max_value=30, value=5)
-                    
-                    uploaded_file = st.file_uploader("Upload PDF", type=['pdf'])
-                    
-                    # Submit button
+                    target_competency = st.selectbox("Target Competency", competency_areas, key="target_comp")
+                    material_title = st.text_input("Material Title", key="mat_title")
+                    material_description = st.text_area("Description", key="mat_desc")
+                    duration_days = st.number_input("Duration (Number of Days)", min_value=1, max_value=30, value=5, key="duration")
+    
+                    uploaded_file = st.file_uploader("Upload PDF", type=['pdf'], key="pdf_upload")
+    
                     submit_button = st.form_submit_button("🚀 Upload Material")
                     
                     if submit_button:
@@ -1036,7 +1036,8 @@ def teacher_dashboard():
                                 label=f"📥 Download {material['filename']}",
                                 data=material['file_data'],
                                 file_name=material['filename'],
-                                mime='application/pdf'
+                                mime='application/pdf',
+                                key=f"teacher_download_{selected_student}_{material['material_id']}"
                             )
                 else:
                     st.info("No materials uploaded yet for this student.")
@@ -1111,7 +1112,7 @@ def teacher_dashboard():
                         feedback_key = f"feedback_{progress['daily_progress_id']}"
                         new_feedback = st.text_input(f"Add feedback for Day {progress['day_number']}", key=feedback_key)
                 
-                        if st.button(f"Submit Feedback", key=f"submit_{progress['daily_progress_id']}"):
+                        if st.button(f"Submit Feedback Day {progress['day_number']}", key=f"submit_{progress['daily_progress_id']}_{progress['day_number']}"):
                             if new_feedback:
                                 feedback_id = f"{progress['daily_progress_id']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                                 save_daily_feedback(feedback_id, progress['daily_progress_id'], 
@@ -1253,7 +1254,7 @@ def parent_dashboard():
                             
                                 with col3:
                                     if not existing_progress or not existing_progress['completed']:
-                                        if st.button(f"Complete", key=f"complete_{sid}_{material['material_id']}_day_{day}"):
+                                        if st.button(f"Save Comment", key=f"save_comment_{sid}_{material['material_id']}_day_{day}"):
                                             daily_progress_id = f"{material['material_id']}_day_{day}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                                             save_daily_progress(daily_progress_id, material['material_id'], sid, 
                                                           st.session_state.current_user, day, 
