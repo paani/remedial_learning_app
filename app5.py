@@ -170,6 +170,23 @@ def init_database():
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
+def authenticate_user(username, password):
+    """Authenticate user against database"""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT user_type FROM users 
+        WHERE username = ? AND password = ?
+    ''', (username, hash_password(password)))
+    
+    result = cursor.fetchone()
+    conn.close()
+    
+    if result:
+        return True, result[0]  # Return (is_authenticated, user_type)
+    return False, None
+
 def create_user(username, password, user_type, full_name):
     """Create a new user in the database"""
     conn = sqlite3.connect(DB_NAME)
