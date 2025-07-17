@@ -16,7 +16,7 @@ st.set_page_config(
 )
 
 # Database setup
-DB_NAME = "remedial_platform.db"
+DB_NAME = os.path.join(os.path.dirname(__file__), "remedial_platform.db")
 
 def init_database():
     """Initialize SQLite database with all required tables"""
