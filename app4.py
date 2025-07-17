@@ -991,8 +991,12 @@ def parent_dashboard():
                             st.write(f"Duration: {material['duration_days']} days")
                         
                             # Download link
-                            st.markdown(create_download_link(material['file_data'], material['filename']), 
-                                    unsafe_allow_html=True)
+                            st.download_button(
+                                label=f"📥 Download {material['filename']}",
+                                data=material['file_data'],
+                                file_name=material['filename'],
+                                mime='application/octet-stream'
+                            )
                         
                             # Daily progress tracking
                             st.write("**Daily Progress:**")
