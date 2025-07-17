@@ -1060,6 +1060,8 @@ def teacher_dashboard():
             st.info("No students available.")
 
 
+# Replace the parent_dashboard function with this fixed version:
+
 def parent_dashboard():
     st.header("Parent Dashboard")
     
@@ -1119,7 +1121,7 @@ def parent_dashboard():
         parent_students = get_user_students(st.session_state.current_user, 'parent')
     
         if parent_students:
-            for sid in parent_students:
+            for student_idx, sid in enumerate(parent_students):
                 student_info = get_student_info(sid)
                 if student_info:
                     st.write(f"**{student_info[0]}** (ID: {sid})")
@@ -1128,17 +1130,18 @@ def parent_dashboard():
                     materials = get_student_materials(sid)
                 
                     if materials:
-                        for material in materials:
+                        for material_idx, material in enumerate(materials):
                             st.write(f"**{material['title']}** - {material['competency']}")
                             st.write(f"Description: {material['description']}")
                             st.write(f"Duration: {material['duration_days']} days")
                         
-                            # Download link
+                            # Download link with unique key
                             st.download_button(
                                 label=f"📥 Download {material['filename']}",
                                 data=material['file_data'],
                                 file_name=material['filename'],
-                                mime='application/octet-stream'
+                                mime='application/octet-stream',
+                                key=f"download_{sid}_{material_idx}_{material['material_id']}"
                             )
                         
                             # Daily progress tracking
@@ -1175,8 +1178,8 @@ def parent_dashboard():
                                     else:
                                         st.write("Not started")
                                 
-                                    # Comments input
-                                    comment_key = f"comment_{material['material_id']}_day_{day}"
+                                    # Comments input with unique key
+                                    comment_key = f"comment_{sid}_{material['material_id']}_day_{day}"
                                     existing_comment = existing_progress['parent_comments'] if existing_progress else ""
                                     parent_comment = st.text_input(f"Add comment for Day {day}", 
                                                              value=existing_comment, 
@@ -1184,7 +1187,7 @@ def parent_dashboard():
                             
                                 with col3:
                                     if not existing_progress or not existing_progress['completed']:
-                                        if st.button(f"Complete", key=f"complete_{material['material_id']}_day_{day}"):
+                                        if st.button(f"Complete", key=f"complete_{sid}_{material['material_id']}_day_{day}"):
                                             daily_progress_id = f"{material['material_id']}_day_{day}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                                             save_daily_progress(daily_progress_id, material['material_id'], sid, 
                                                           st.session_state.current_user, day, 
@@ -1193,7 +1196,7 @@ def parent_dashboard():
                                             st.rerun()
                                 
                                     # Save comment button (for when not marking as complete)
-                                    if st.button(f"Save Comment", key=f"save_comment_{material['material_id']}_day_{day}"):
+                                    if st.button(f"Save Comment", key=f"save_comment_{sid}_{material['material_id']}_day_{day}"):
                                         if parent_comment:
                                             daily_progress_id = f"{material['material_id']}_day_{day}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
                                             save_daily_progress(daily_progress_id, material['material_id'], sid, 
