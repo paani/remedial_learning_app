@@ -7,6 +7,16 @@ import base64
 import json
 import uuid
 
+# Add at the top
+IS_DEPLOYED = os.getenv('STREAMLIT_RUNTIME_ENV') == 'cloud'
+
+if IS_DEPLOYED:
+    # More aggressive session persistence for cloud
+    SESSION_DURATION_DAYS = 30
+else:
+    SESSION_DURATION_DAYS = 7
+
+
 # Configure page
 st.set_page_config(
     page_title="Parent-Teacher Collaborative Platform",
@@ -677,6 +687,14 @@ def backup_database():
         backup_name = f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
         import shutil
         shutil.copy2(DB_NAME, backup_name)
+
+def safe_db_operation(operation):
+    """Safely execute database operations"""
+    try:
+        return operation()
+    except Exception as e:
+        st.error(f"Database error: {str(e)}")
+        return None
 
 # Initialize database
 init_database()
