@@ -1,4 +1,6 @@
-<!DOCTYPE html>
+import streamlit as st
+
+html_content = """
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1247,3 +1249,6 @@
     </script>
 </body>
 </html>
+"""
+
+st.markdown(html_content, unsafe_allow_html=True)
